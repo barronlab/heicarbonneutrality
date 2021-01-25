@@ -1,0 +1,764 @@
+---
+title: "HEI carbon neutrality data analysis"
+output: html_notebook
+---
+
+```{r, include = FALSE}
+library(tidyverse)
+library(readxl)
+library(here)
+```
+
+## Data adjustments
+**American:** According to their 2017-18 Second Nature report (https://reporting.secondnature.org/ape/ape-public!429), American University purchased 54,924,049 kWh of electricity. They also bought 59,443,000 kWh of RECs; 32,000,000 kWh were unbundled and the remainder were bundled. American University is part of the RFCE eGrid region. In 2017, the residual emissions intensity for RFCE (published by Green-E) was 758.46 lb CO2e/MWh, which is 0.000344032 MT CO2e/kWh (https://www.green-e.org/2019-residual-mix). To calculate MT CO2e from electricity and RECs, we multiplied kWh in each category by this emissions intensity. The breakdown of offsets by project type came from email correspondence.
+
+**Bates:** Data for both the baseline and carbon neutral year came from an excel spreadsheet ("7_10_2019 Emissions Update") emailed to us by Tom Twist, Sustainability Manager at Bates. Number and type of offsets are also from email correspondence with Tom Twist. Enrollment in baseline year is from IPEDS data. 
+
+**Bowdoin:** Information about RECs bought in Bowdoin's carbon neutral year was emailed to us by Keisha Payson, Associate Director of Sustainability. The number and type of offsets purchased is reported on Bowdoin's website (http://community.bowdoin.edu/news/2018/04/bowdoin-achieves-carbon-neutrality-now-for-the-next-step/).
+
+**Colby**: Sandy Beauregard, Sustainability Director, emailed us adjustments to Colby's Scope 2 emissions for both baseline and carbon neutral year. In its accounting, Colby uses a lower emissions factor than the one in Second Nature. For our analysis, we used Colby's values of 5317.9 MT for baseline (FY08) and 4636.6 MT for carbon neutral (FY13) electricity emissions. Colby matches REC purchases kWh-for-kWh with purchased electricity, so we also adjusted down the metric tons of REC purchases for both those years. (There is no FY13 report in Second Nature, so the rest of the CN year data is from the FY14 report.)
+
+**Colgate:** Colgate reports the emissions factor for electricity from their municipal power supplier in their FY18 Greenhouse Gas Inventory Report (https://www.colgate.edu/about/sustainability/sustainability-news/2018-greenhouse-gas-emissions-inventory). In 2018, it was 0.0000163 MT CO2e/kWh. On Second Nature (https://reporting.secondnature.org/ape/ape-public!1105), Colgate reports purchasing 29,557,572 kWh of electricity and 31,809,000 kWh of unbundled RECs. To calculate MT CO2e from electricity and RECs, we multiplied kWh in each category by the emissions intensity. 
+
+Because one of Colgate's biomass boilers was offline in FY19, scope 1 stationary emissions were unusually high. To produce representative data, we used scope 1 stationary and biogenic emissions from FY18. (In FY18 scope 1 stationary, we included an additional 232 MT of non-biogenic emissions from the biomass plant, which are reported in Colgate's updated inventory but not in Second Nature. The inventory was emailed to us by John Pumilio in July 2020.) This lowered scope 1 stationary emissions by 2121 MT; we subtracted this amount from FY19 offsets to maintain balance.
+
+Baseline scope 1 stationary emissions are also adjusted to account for non-biogenic emissions from the biomass plant (an additional 468 MT CO2e in FY09).
+
+Breakdown of offsets by project is from Colgate's *Carbon Offsets: 2019 Final Investments* report (https://drive.google.com/file/d/1hEYf_SsV9t3eZEKlI2A_Muha9DkmHDYb/view).
+
+**Middlebury:** The estimate of biogenic emissions was emailed to us by Jack Byrne, Dean of Environmental Affairs and Sustainability. No commuting emissions were reported in Second Nature for Middlebury's carbon neutral year, so we used baseline commuting emissions to approximate neutral year emissions. (According to email from Jack Byrne, Middlebury did not include employee or student commuting in their neutrality calculations.)
+
+**Colorado:** Colorado College purchases bundled RECs to meet 100% of its electricity demand; the values we use for bundled RECs are equal to electricity use and emissions in the carbon neutral year. Enrollment is from Colorado College IPE data.
+
+From email correspondence with Ian Johnson (Sustainability Director), we know that Colorado College purchased enough landfill methane offsets to reach neutrality in FY20. We manually increased the number of offsets listed by 10,571 MT to bring net emissions down to zero.
+
+**USF:** Breakdown of offsets by project is from email correspondence with Richard Hsu, Sustainability Coordinator.
+
+**Dickinson:** The following information about offsets is from email correspondence with Neil Leary (Director of the Center for Sustainability Education) and Ken Shultes (Associate VP for Sustainability & Facilities Planning): In FY20, Dickinson purchased 12,000 MT of offsets. 7,000 MT will be applied to FY20, and 5,000 MT can be applied to either FY20 or FY21. Because of COVID-19, Dickinson's FY20 emissions will be lower than FY19; Ken and Neil predicted that 7,000 MT of offsets would be sufficient for FY20. To include representative data (rather than anomalous pandemic-related reductions), we decided to keep the emissions data as reported. To reach net neutrality, we increased Dickinson's offsets to 9,400 MT. (Emissions data for FY20 is not yet available, so our data is from FY19.)
+
+Information about the type of offset is from Dickinson's website (https://www.dickinson.edu/homepage/1340/carbon_neutrality_faq).
+
+**Allegheny:** Kelly Boulton (Sustainability Coordinator) provided us with emissions data for Allegheny's carbon neutral year (FY20) via email. She also explained that Allegheny purchased 10,000 MT of offsets so that they would have more than enough to cover their FY20 emissions. (As of 10/6/2020, they were still finalizing the calculation of exactly how many offsets would be applied.) According to the same email, the offsets were from a PA dairy methane digester, Haiti water filtration project, CO soil conservation project, and MS industrial emissions abatement project (one quarter of offsets from each source). 
+
+Allegheny College purchased 11,788,677 kWh of electricity in FY20 and matched these kWh-for-kWh with unbundled RECs (Kelly Boulton, personal communication). Allegheny is part of the RFCE eGrid region. The most recent residual emissions intensity for RFCE published by Green-E is 716.22 lb CO2e/MWh, which is 0.000324872 MT CO2e/kWh (2018 data, https://www.green-e.org/2020-residual-mix). To calculate MT CO2e from electricity and RECs, we multiplied kWh in each category by this emissions intensity.
+
+**Arizona State:** According to their 2018-19 Second Nature report (https://reporting.secondnature.org/ape/ape-public!1037), ASU purchased 227,135,945 kWh of electricity. This includes consumption from the grid as well as on-campus solar panels whose RECs are not retained. They purchased 231,815,000 kWh of unbundled RECs to cover this electricity consumption with a 2% margin for error. ASU is also part of a 65,000,000 kWh PPA. Total scope 2 electricity consumption is 227,135,945 kWh plus 65,000,000 kWh. ASU is part of the AZNM e-Grid region. In 2018, the residual emissions intensity for AZNM (published by Green-E) was 1,023.92 lb CO2e/MWh, which is 0.000464443 MT CO2e/kWh (https://www.green-e.org/2020-residual-mix). To calculate MT CO2e from electricity and RECs, we multiplied kWh in each category by this emissions intensity.
+
+**UC Merced:** The University of California, Merced declared carbon neutrality in December 2020 (https://news.ucmerced.edu/news/2020/campus-reaches-carbon-neutrality-ahead-schedule), but only for Scopes 1 and 2 (https://sustainability.ucmerced.edu/carbon-neutrality). According to their 2018 Second Nature Report (https://reporting.secondnature.org/ape/ape-public!634), this is (5,163 MT + 5,133 MT)/(5,163 MT + 5,133 MT + 7,953 MT) = 56% of their total emissions.
+
+```{r import_data, include = FALSE}
+data <- read_xlsx(here("working_master_data.xlsx"))
+
+#American
+data[[13, "s2Electricity"]] <- 0.000344032 * 54924049
+data[[13, "recUnbundled"]] <- 0.000344032 * 32000000
+data[[13, "recBundled"]] <- 0.000344032 * (59443000 - 32000000)
+
+#Colby
+data[[4, "s2Electricity"]] <- 5318
+data[[4, "recUnbundled"]] <- 5318
+data[[16, "s2Electricity"]] <- 4637
+data[[16, "recUnbundled"]] <- 4637
+
+#Colgate
+data[[5, "s1Stationary"]] <- data[[5, "s1Stationary"]] + 468
+
+data[[17, "s2Electricity"]] <- 0.0000163 * 29557572
+data[[17, "recUnbundled"]] <- 0.0000163 * 31809000
+
+data[[17, "s1Stationary"]] <- 7780 + 232
+data[[17, "offsetsPurchased"]] <- data[[17, "offsetsPurchased"]] - 2121
+data[[17, "biogenicEmissions"]] <- 18100
+
+#Colorado
+data[[21, "offsetsPurchased"]] <- data[[21, "offsetsPurchased"]] + 10571
+
+#Dickinson
+data[[22, "offsetsPurchased"]] <- 9408
+
+#Allegheny
+data[[23, "s2Electricity"]] <- 0.000324872 * 11788677
+data[[23, "recUnbundled"]] <- 0.000324872 * 11788677
+
+#ASU
+data[[24, "s2Electricity"]] <- 0.000464443 * (227135945 + 65000000)
+data[[24, "recUnbundled"]] <- 0.000464443 * 231815000
+data[[24, "recBundled"]] <- 0.000464443 * 65000000
+
+#remove ASU from data set
+asu <- filter(data, college=="ArizonaState")
+data <- filter(data, college!="ArizonaState")
+```
+
+```{r data_analysis, include = FALSE}
+#create a single column for each scope
+dataCondensed <- data %>%
+  mutate(scope1 = s1Stationary + s1Mobile + s1Process + s1Fugitive + s1Other,
+         scope2NoRecs = s2Electricity + s2Heat + s2Cool + s2Steam,
+         scope3 = s3Commute + s3Air + s3SolidWaste + s3FuelEnergy + s3GoodsServices + s3TD + s3Agriculture + s3Wastewater + s3Other + s3Other2 + s3Other3 + s3Compost) %>% 
+  select(college, yearType, scope1, s1Stationary, scope2NoRecs, scope3, biogenicEmissions, offsetsPurchased, recUnbundled, recBundled, unverifiedLandSeq)
+
+#calculate net and gross emissions and percent changes
+dataCalculated <- left_join(subset(dataCondensed, yearType=="BL"), 
+                            subset(dataCondensed, yearType=="CN"), 
+                            by="college", 
+                            suffix = c(".BL", ".CN")) %>%
+  select(-c(yearType.CN, yearType.BL)) %>%
+  mutate(
+         gross.BL = scope1.BL + scope2NoRecs.BL + scope3.BL,
+         gross.CN = scope1.CN + scope2NoRecs.CN + scope3.CN, 
+         net.CN = gross.CN - offsetsPurchased.CN - recUnbundled.CN - recBundled.CN - unverifiedLandSeq.CN, 
+         
+         scope1change = scope1.CN - scope1.BL,
+         scope2changeNoRecs = scope2NoRecs.CN - scope2NoRecs.BL,
+         scope2changeNoUnbundled = scope2changeNoRecs - recBundled.CN,
+         scope2changeWithRecs = scope2changeNoRecs - recBundled.CN - recUnbundled.CN,
+         scope3change = scope3.CN - scope3.BL,
+         totalChange = net.CN - gross.BL, 
+         
+         #percent change in each scope from gross BL levels
+         scope1perc = scope1change/scope1.BL*100,
+         scope2percNoRecs = scope2changeNoRecs/scope2NoRecs.BL*100,
+         scope2percNoUnbundled = scope2changeNoUnbundled/scope2NoRecs.BL*100,
+         scope2percWithRecs = scope2changeWithRecs/scope2NoRecs.BL*100,
+         scope3perc = scope3change/scope3.BL*100,
+         
+         #percent of total reductions from various sources
+         offsetsPerc = -offsetsPurchased.CN/totalChange*100,
+         unbundledRecPerc = -recUnbundled.CN/totalChange*100,
+         bundledRecPerc = -recBundled.CN/totalChange*100,
+         landSeqPerc = -unverifiedLandSeq.CN/totalChange*100,
+         
+        #assume all reductions in s1Stationary at schools that use bioenergy are from bioenergy. Note that bioReduction is a subset of scope1change.
+        #Colgate is excluded because their use of bioenergy declined from BL to CN year.
+         bioReduction = ifelse(biogenicEmissions.CN != 0 & college != "Colgate", -(s1Stationary.CN-s1Stationary.BL), 0),
+         bioPerc = -bioReduction/totalChange*100
+  )
+
+```
+
+## Figures
+
+```{r scopes, echo = FALSE}
+scopeSummary <- dataCalculated %>%
+  select(college, scope1perc, scope2percWithRecs, scope2percNoUnbundled, scope2percNoRecs, scope3perc) %>%
+  pivot_longer(c(scope1perc, scope2percWithRecs, scope2percNoUnbundled, scope2percNoRecs, scope3perc), names_to = "scope", values_to = "percent")
+scopeSummary$scope = factor(scopeSummary$scope, levels = c("scope1perc", "scope2percWithRecs", "scope2percNoUnbundled", "scope2percNoRecs", "scope3perc"))
+
+ggplot(scopeSummary) +
+  geom_text(aes(x = scope, y = percent, color = college, label = college), position=position_jitter(0.25)) +
+  scale_x_discrete(labels=c(scope1perc = "Scope 1", 
+                            scope2percWithRecs = "Scope 2\nWith RECs",
+                            scope2percNoUnbundled = "Scope 2\nNo Unbundled RECs",
+                            scope2percNoRecs = "Scope 2\nNo RECS", 
+                            scope3perc = "Scope 3")) +
+  labs(y="Percent change in emissions relative to baseline", x=NULL) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+ggsave(filename = "fig2.jpeg", path = here("graphs"), height = 4, width = 7, units = "in")
+```
+
+
+```{r reductions, echo = FALSE}
+offsetSummary <- dataCalculated %>%
+  select(college, offsetsPerc, unbundledRecPerc,  bioPerc) %>%
+  mutate(offsetsUnbundledRecPerc = unbundledRecPerc + offsetsPerc,
+         offsetsUnbundledRecBioPerc = unbundledRecPerc + offsetsPerc + bioPerc) %>%
+  pivot_longer(c(offsetsPerc, unbundledRecPerc, bioPerc, offsetsUnbundledRecPerc, offsetsUnbundledRecBioPerc), names_to = "source", values_to = "percent") %>%
+  filter(source %in% c("offsetsPerc", "offsetsUnbundledRecPerc", "offsetsUnbundledRecBioPerc"))
+
+offsetSummary$source <- factor(offsetSummary$source, levels = c("offsetsPerc", "offsetsUnbundledRecPerc",  "offsetsUnbundledRecBioPerc"))
+
+ggplot(offsetSummary) +
+  geom_text(aes(x = source, y = percent, color = college, label = college), position=position_jitter(0.25)) +
+  labs(y="Percent of total reduction in reported GHGs", x=NULL) +
+  scale_x_discrete(labels= c(offsetsPerc = "Offsets", 
+                             offsetsUnbundledRecPerc = "Offsets plus\nunbundled RECs", 
+                             offsetsUnbundledRecBioPerc = "Offsets, unbundled\nRECs and bioenergy")) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+ggsave(filename = "fig3.jpeg", path = here("graphs"), height = 4, width = 7, units = "in")
+```
+
+```{r point_graphs, echo = FALSE}
+scopeMedians <- scopeSummary %>%
+  group_by(scope) %>%
+  summarise(med = median(percent))
+offsetMedians <- offsetSummary %>%
+  group_by(source) %>%
+  summarise(med = median(percent))
+
+ggplot(scopeSummary) +
+  geom_crossbar(data = scopeMedians, aes(x = scope, ymin = med, y = med, ymax = med), width = 0.4) +
+  geom_point(aes(x = scope, y = percent, color = college), position = position_jitter(0.1)) +
+  geom_rect(aes(xmin = 0.8, xmax = 1.2, ymin = -77, ymax = -55), fill = "transparent", color = "black", linetype = "dashed", size = 0.3) +
+  annotate("text", x = 1.46, y = -66, label = "Bioenergy", size = 3) +
+  scale_x_discrete(labels = c(scope1perc = "Scope 1", 
+                            scope2percWithRecs = "Scope 2\nWith RECs",
+                            scope2percNoUnbundled = "Scope 2\nNo Unbundled RECs",
+                            scope2percNoRecs = "Scope 2\nNo RECS", 
+                            scope3perc = "Scope 3")) +
+  labs(y = "Percent change in emissions relative to baseline", x = NULL) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+ggsave(filename = "fig2_noNames.jpeg", path = here("graphs"), height = 4, width = 7, units = "in")
+
+ggplot(offsetSummary) +
+  geom_crossbar(data = offsetMedians, aes(x = source, ymin = med, y = med, ymax = med), width = 0.4) +
+  geom_point(aes(x = source, y = percent, color = college), position = position_jitter(0.1)) +
+  labs(y = "Percent of total reduction in reported GHGs", x = NULL) +
+  scale_x_discrete(labels = c(offsetsPerc = "Offsets", 
+                             offsetsUnbundledRecPerc = "Offsets plus\nunbundled RECs", 
+                             offsetsUnbundledRecBioPerc = "Offsets, unbundled\nRECs and bioenergy")) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+ggsave(filename = "fig3_noNames.jpeg", path = here("graphs"), height = 4, width = 7, units = "in")
+
+rm(scopeMedians, offsetMedians)
+
+```
+
+
+```{r alternate_fig3, echo=FALSE}
+#Note that the scope percentages in this section are different from the rest of the analysis. Here, scope1perc is the percentage of total reductions that came from scope 1 reductions. (Elsewhere, scope1perc is the percent change in scope 1.)
+
+percentData <- dataCalculated %>%
+  mutate(scope1perc = (scope1change + bioReduction)/totalChange*100, 
+         scope2percNoRecs = scope2changeNoRecs/totalChange*100, 
+         scope3perc = scope3change/totalChange*100) %>%
+  select(college, scope1perc, scope2percNoRecs, scope3perc, unbundledRecPerc, bundledRecPerc, offsetsPerc, landSeqPerc, bioPerc) %>%
+  pivot_longer(c(scope1perc, scope2percNoRecs, scope3perc, unbundledRecPerc, bundledRecPerc, offsetsPerc, landSeqPerc, bioPerc), names_to = "source", values_to = "percent")
+percentData$source <- factor(percentData$source, levels = c("offsetsPerc", "unbundledRecPerc",  "bundledRecPerc",  "landSeqPerc", "bioPerc", "scope3perc", "scope2percNoRecs", "scope1perc"))
+
+ggplot(percentData) +
+  geom_col(aes(x = college, y = percent, fill = source)) +
+  scale_fill_discrete(labels = c(scope1perc = "Scope 1 change", 
+                                 scope2percNoRecs = "Scope 2 change (not including RECs)", 
+                                 scope3perc = "Scope 3 change", 
+                                 unbundledRecPerc = "Unbundled RECs", 
+                                 bundledRecPerc = "Bundled RECs", 
+                                 offsetsPerc = "Offsets", 
+                                 landSeqPerc = "College-owned land sequestration", 
+                                 bioPerc = "Scope 1 reduction from bioenergy")) +
+  scale_y_continuous("Percent of total reduction", breaks = seq(-20, 120, by=20)) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle=45, vjust = 1, hjust = 1), 
+        legend.title = element_blank(), 
+        axis.title.x = element_blank())
+
+ggsave(filename = "figS4.jpeg", path = here("graphs"), height = 4, width = 7, units = "in")
+ 
+```
+```{r functions, include = FALSE}
+#converts from MT to kilotonnes (divides every number in x by 1000)
+kilotonneConverter <- function(x){
+  for(i in seq_along(x)){
+    if(!is.character(x[[i]])){
+       x[[i]] <- x[[i]]/1000
+    }
+  }
+  x
+}
+
+#returns appropriate color for each element in waterfall chart
+colorChooser <- function(name){
+  if(name %in% c("Scope 1 increase",  "Scope 2 increase",  "Scope 3 increase", "Gross emissions\nbaseline year", "Net emissions\ncarbon neutral year"))
+    1
+  else if(name %in% c("Scope 1 reduction", "Scope 2 reduction", "Scope 3 reduction"))
+    -2
+  else if(name %in% c("Scope 1 reduction\ndue to bioenergy", "College-owned\nland sequestration", "Bundled RECs", "Unbundled RECs",  "Offsets"))
+    -3
+  else if(name == "Gross biogenic\nCO2 emissions\n(not reported)")
+    -4
+  else
+    0
+  
+}
+
+#When given a variable name ("college"), returns full name
+nameChooser <- function(college){
+  collegeNames = tibble(
+    variableNames = c("American", "Bates", "Bowdoin", "Colby", "Colgate", "GMC", "Middlebury", "USF", "Colorado", "Dickinson", "Allegheny", "ArizonaState"),
+    formalNames = c("American University", "Bates College", "Bowdoin College", "Colby College", "Colgate University", "Green Mountain College", "Middlebury College", "University of San Francisco", "Colorado College", "Dickinson College", "Allegheny College", "Arizona State University")
+  )
+  
+  filter(collegeNames, variableNames == college)$formalNames
+}
+
+#creates waterfall chart. "data" argument should be a single row from dataCalculated
+waterfallMaker <- function(data){
+  data <- kilotonneConverter(data)
+  
+ #used to display scope data in first column of waterfall chart
+  scopes.BL <- data %>%
+    select(scope1.BL, scope2NoRecs.BL, scope3.BL) %>%
+    rename("Scope 1" = scope1.BL, "Scope 2" = scope2NoRecs.BL, "Scope 3" = scope3.BL) %>%
+    pivot_longer(c(`Scope 1`, `Scope 2`, `Scope 3`), names_to = "scope", values_to = "emissions")
+  scopes.BL$scope <- factor(scopes.BL$scope, levels = c("Scope 3", "Scope 2", "Scope 1"))
+  
+  toGraph <- tibble(
+   name = c("Gross emissions\nbaseline year", "Scope 1 increase", "Scope 1 reduction", "Scope 2 increase", "Scope 2 reduction", "Scope 3 increase", "Scope 3 reduction", "Scope 1 reduction\ndue to bioenergy", "College-owned\nland sequestration", "Bundled RECs", "Unbundled RECs",  "Offsets", "Net emissions\ncarbon neutral year", "Gross biogenic\nCO2 emissions\nat neutrality", "Gross biogenic\nCO2 emissions\n(not reported)"),
+   emissions = vector("numeric", length(name))
+  )
+ 
+  #assign emissions values to the appropriate category
+  toGraph[[1, 2]] <- data$gross.BL
+ 
+  if(data$scope1change + data$bioReduction > 0)
+    toGraph[[2, 2]] = data$scope1change + data$bioReduction
+  else
+    toGraph[[3, 2]] = data$scope1change + data$bioReduction
+ 
+  if(data$scope2changeNoRecs > 0)
+    toGraph[[4, 2]] = data$scope2changeNoRecs
+  else
+    toGraph[[5, 2]] = data$scope2changeNoRecs
+ 
+  if(data$scope3change > 0)
+    toGraph[[6, 2]] = data$scope3change
+  else
+    toGraph[[7, 2]] = data$scope3change
+ 
+  toGraph[[8, 2]] = -data$bioReduction
+  toGraph[[9, 2]] = -data$unverifiedLandSeq.CN
+  toGraph[[10, 2]] = -data$recBundled.CN
+  toGraph[[11, 2]] = -data$recUnbundled.CN
+  toGraph[[12, 2]] = -data$offsetsPurchased.CN
+ 
+  if(data$net.CN > 0.1 )
+     toGraph[[13, 2]] = -data$net.CN #only displays net emissions larger than 100 MT (leaves room for small reporting errors)
+  
+  if(data$college %in% c("Colby", "Colgate", "GMC", "Middlebury")){
+    toGraph[[14,2]] = data$biogenicEmissions.CN
+  }
+  
+  #Bates is the only school that did not report biogenic stack emissions. The value of 0.01 is not data; it prevents the column from being removed with the other zero values.
+  if(data$college == "Bates"){
+    toGraph[[15,2]] = 0.01
+  }
+   
+  toGraph <- filter(toGraph, toGraph$emissions!=0) #removes irrelevant emissions categories
+ 
+  toGraph$balance <- cumsum(c(0, toGraph$emissions[-nrow(toGraph)])) #determines starting position of each rectangle
+  toGraph$counter <- 1:nrow(toGraph) #determines position of rectangles on x axis
+  toGraph$status <- factor(map_dbl(toGraph$name, colorChooser)) #determines color of rectangles
+
+  fig <- ggplot(toGraph) +
+    geom_rect(aes(xmin = counter-0.47, xmax = counter+0.47, ymin = balance, ymax = balance+emissions, fill = status), show.legend = FALSE) +
+    scale_x_continuous("", breaks=toGraph$counter, labels=toGraph$name) +
+    scale_fill_manual(values = c("-4" = "transparent", "-3" = "yellowgreen", "-2" = "chartreuse4", "0" = "gray78", "1" = "hotpink4"))+
+    labs(y="Emissions (kilotonnes CO2e)", title = nameChooser(data$college)) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=0.5)) +
+    geom_col(data = scopes.BL, aes(x=1, y=emissions, color = scope), width = 0.94, alpha = 0, color="black") +
+    geom_text(data = scopes.BL, aes(x=1, y=emissions, label = scope), position = position_stack(vjust=0.5)) 
+
+  fig
+}
+
+```
+
+
+```{r biogenic_emissions, echo = FALSE}
+#Bates is omitted from this graph because they do not report stack emissions.
+data %>%
+  filter(college %in% c("Colby", "Colgate", "GMC", "Middlebury")) %>% 
+  select(college, yearType, s1Stationary, biogenicEmissions) %>%
+  pivot_longer(c(s1Stationary, biogenicEmissions), names_to = "Source", values_to = "Emissions") %>%
+  kilotonneConverter() %>%
+  ggplot() +
+  geom_col(aes(x=yearType, y=Emissions, fill=Source))+
+  facet_wrap(~college, nrow=1) +
+  labs(y="Emissions (kilotonnes CO2e)", x=NULL) +
+  scale_fill_discrete("", labels = c(biogenicEmissions = "Biogenic emissions", s1Stationary = "Scope 1 stationary")) +
+  theme_bw() 
+
+ggsave(filename = "figS2.jpeg", path = here("graphs"), height = 4, width = 7, units = "in")
+
+```
+
+```{r school_waterfalls, echo = FALSE}
+output <- vector("list", nrow(dataCalculated))
+
+for(i in seq_along(output)){
+  output[[i]] <- waterfallMaker(filter(dataCalculated, college == dataCalculated[[i,1]]))
+  ggsave(filename = str_c(dataCalculated[[i,1]], ".jpeg"), plot = output[[i]], path = here("graphs", "SI_waterfalls"), height = 4, width = 6, units = "in")
+}
+
+output
+```
+
+```{r Middlebury, echo = FALSE }
+#This section creates a waterfall graph for Middlebury with better formatting. It also relabels Middlebury's offsets as land sequestration
+
+  middlebury <- filter(dataCalculated, college=="Middlebury") %>% kilotonneConverter()
+  
+  middleburyScopes.BL <- middlebury %>%
+    select(scope1.BL, scope2NoRecs.BL, scope3.BL) %>%
+    rename("Scope 1" = scope1.BL, "Scope 2" = scope2NoRecs.BL, "Scope 3" = scope3.BL) %>%
+    pivot_longer(c(`Scope 1`, `Scope 2`, `Scope 3`), names_to = "scope", values_to = "emissions")
+  middleburyScopes.BL$scope <- factor(middleburyScopes.BL$scope, levels = c("Scope 3", "Scope 2", "Scope 1"))
+  
+  middleburyToGraph <- tibble(
+   name = c("Gross emissions\nbaseline year", "Scope 1 reduction", "Scope 2 increase",  "Scope 3 increase",  "Scope 1 reduction\ndue to bioenergy", "College-owned\nland sequestration\n(counted as offsets)",  "Gross biogenic\nCO2 emissions\nat neutrality"),
+   emissions = c(middlebury$gross.BL, middlebury$scope1change + middlebury$bioReduction, middlebury$scope2changeNoRecs, middlebury$scope3change, -middlebury$bioReduction, -middlebury$offsetsPurchased.CN,  middlebury$biogenicEmissions.CN)
+  )
+ 
+  middleburyToGraph$balance <- cumsum(c(0, middleburyToGraph$emissions[-nrow(middleburyToGraph)]))
+  middleburyToGraph$counter <- 1:nrow(middleburyToGraph)
+  middleburyToGraph$status <- factor(c(1, -2, 1, 1, -3, -3, 0))
+
+ ggplot(middleburyToGraph) +
+  geom_rect(aes(xmin = counter-0.47, xmax = counter+0.47, ymin=balance, ymax=balance+emissions, fill=status), show.legend = FALSE) +
+  scale_x_continuous("", breaks=middleburyToGraph$counter, labels=middleburyToGraph$name) +
+  scale_fill_manual(values = c("-3" = "yellowgreen", "-2"="chartreuse4", "0" = "gray78", "1"="hotpink4") )+
+  labs(y = "Emissions (kilotonnes CO2e)", title = "Middlebury College") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle=90, vjust = 0.5, hjust = 0.5)) +
+  geom_col(data = middleburyScopes.BL, aes(x=1, y=emissions, color = scope), width = 0.94, alpha = 0, color="black") +
+  annotate("text", x=1, y=13.5, label = "Scope 1") +
+  annotate("text", x=1, y=29.3, label = "Scope 3")
+
+ ggsave(filename = "Middlebury.jpeg", path = here("graphs", "SI_waterfalls"), height = 4, width = 6, units = "in")
+ 
+ rm(middlebury, middleburyScopes.BL, middleburyToGraph)
+
+```
+
+```{r summary_waterfall, echo = FALSE}
+#In this figure, which aggregates all the schools' emissions, Middlebury's offsets are counted as land sequestration.
+
+temp <- dataCalculated
+temp[[7, "unverifiedLandSeq.CN"]] <- temp[[7, "offsetsPurchased.CN"]]
+temp[[7, "offsetsPurchased.CN"]] <- 0
+  
+temp %>%
+  select(-college) %>%
+  summarise_all(sum) %>%
+  mutate(college = "placeholder") %>% #prevents error message from waterfallMaker calling a missing variable
+  waterfallMaker() +
+  labs(title = NULL)
+
+ggsave(filename = "fig1.jpeg", path = here("graphs"), height = 4, width = 7.5, units = "in")
+
+rm(temp)
+
+```
+
+
+```{r neutrality_years, echo = FALSE}
+
+neutralYears <- read_xlsx(here("carbon_neutral_years.xlsx")) %>%
+  mutate(schoolCount_cumulative = cumsum(schoolCount_SN))
+
+neutralYears %>%
+  group_by(yearGroup) %>%
+  summarize(schoolCount = sum(schoolCount_SN)) %>%
+  ggplot() +
+  geom_col(aes(x = yearGroup, y = schoolCount), fill="cornflowerblue") +
+  labs(x = "Neutrality year", y = "Number of schools") +
+  theme_bw(base_size = 13)
+
+ggsave(filename = "figS1.jpeg", path = here("graphs"), height = 4, width = 7, units = "in")
+
+```
+
+```{r offsets, echo = FALSE}
+offsets <- read_xlsx(here("offsets.xlsx")) %>% kilotonneConverter() %>% filter(college!="ArizonaState")
+
+offsetsByProject <- offsets %>%
+  group_by(category) %>%
+  summarize(emissions = sum(emissions))
+
+offsetsByProject$category <- factor(offsetsByProject$category, levels = c("Efficient transportation", "Industrial emissions", "Water filtration", "Cookstoves (international)",  "Forest management (international)", "Soil conservation (US)", "Urban forestry (US)", "Forest/land management (US)", "Biomass fuel switch", "Renewable energy development", "Fertilizer nitrous oxide", "Dairy methane", "Landfill methane"))
+offsets$category <- factor(offsets$category, levels = c("Efficient transportation", "Industrial emissions", "Water filtration", "Cookstoves (international)",  "Forest management (international)", "Soil conservation (US)", "Urban forestry (US)", "Forest/land management (US)", "Biomass fuel switch", "Renewable energy development", "Fertilizer nitrous oxide", "Dairy methane", "Landfill methane"))
+
+ggplot(offsetsByProject) +
+  geom_col(aes(x = "Total", y = emissions, fill = category )) +
+  theme_classic() +
+  theme(legend.title = element_blank()) +
+  scale_fill_manual(values = c("wheat3", "thistle4", "darkgray", "gold", "olivedrab1", "chartreuse3", "chartreuse4", "darkgreen", "orangered3", "orangered4", "cornflowerblue", "royalblue", "royalblue4")) +
+  labs(x=NULL, y = "Kilotonnes CO2e")
+
+ggsave(filename = "fig4.jpeg", path = here("graphs"), height = 4, width = 6, units = "in")
+
+ggplot(offsets) +
+  geom_col(aes(x=college, y=emissions, fill=category)) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle=45, vjust = 1, hjust = 1), legend.title = element_blank()) +
+   scale_fill_manual(values = c("wheat3", "thistle4", "darkgray", "gold", "olivedrab1", "chartreuse3", "chartreuse4", "darkgreen", "orangered3", "orangered4", "cornflowerblue", "royalblue", "royalblue4")) +
+  labs(x=NULL, y = "Kilotonnes CO2e")
+
+ggsave(filename = "figS3.jpeg", path = here("graphs"), height = 4, width = 7, units = "in")
+
+```
+
+We compared the breakdown of emissions reductions to the Obama Administration’s Mid-Century Strategy (MCS) for Deep Decarbonization by making a few simplifying assumptions:
+
+-We treated all RECs associated with a power purchase agreement or bundled with electricity as driving new generation. We also included S2 reductions attributable to grid emissions intensities decreasing (85% of total S2 reductions). Renewable energy offsets are included but shown in lighter red. Also included in lighter red are the cookstove offsets purchased by Colgate, which replace coal stoves with concentrating solar cookers.   
+
+-We estimated net reductions from energy efficiency using non-biomass related reductions in scope 1, CO2 reductions in S3, and efficient transportation, cookstoves (purchased by American University), and water filtration offsets. This category also includes S2 reductions not attributable to the grid getting cleaner (15% of total S2 reductions).
+
+-We calculated electrification by directly contacting schools for estimates of major electrification projects. This category includes 56 MT Co2e eliminated by a geothermal heat exchange system at Colgate (Chapel House) (John Pumilio, personal correspondence), an ~800 MT CO2e reduction from geothermal at Colorado College (library and East Campus housing) (Ian Johnson, personal communication), and 46.1 MT from geothermal heating/cooling at Allegheny residence halls (Kelly Boulton, personal communication).
+
+-Bioenergy was estimated assuming complete carbon neutrality of fuels and by using the reduction in Scope 1 stationary combustion emissions for schools that use this strategy. We also included offsets related to biomass.
+
+-Non-CO2 (e.g. landfill methane) and Land Use Change were estimated from offset projects associated with those categories. Non-CO2 reductions also includes changes in Scope 3 solid waste and compost emissions reductions. Land sequestration at Middlebury and Colgate is shown in lighter red.
+
+
+```{r mcs_comparison, echo=FALSE, warning=FALSE}
+
+#Divide Scope 3 reductions into non-CO2 reductions and energy efficiency
+dataTemp <- left_join(subset(data, yearType=="BL"), 
+                      subset(data, yearType=="CN"), 
+                      by="college", 
+                      suffix = c(".BL", ".CN")) %>%
+  select(-c(yearType.CN, yearType.BL, Enrollment.BL, Enrollment.CN, dataLink.BL, dataLink.CN, dataYearStart.BL, dataYearStart.CN, neutralYear.BL, neutralYear.CN)) %>%
+  kilotonneConverter() %>%
+  mutate(
+    s3NonCo2Reduction = (s3SolidWaste.BL + s3Compost.BL + s3Agriculture.BL) - (s3SolidWaste.CN + s3Compost.CN + s3Agriculture.CN),
+    s3EfficiencyReduction = (s3Commute.BL + s3Air.BL + s3FuelEnergy.BL + s3TD.BL + s3Wastewater.BL + s3Other.BL + s3Other2.BL + s3Other3.BL) - (s3Commute.CN + s3Air.CN + s3FuelEnergy.CN + s3TD.CN + s3Wastewater.CN + s3Other.CN + s3Other2.CN + s3Other3.CN)
+  )
+
+#Total reduction in emissions from all schools between BL and CN year
+totalReduction <- summarise(dataCalculated, sum(totalChange)) %>% as.double()/-1000
+
+#Total emissions reductions from electrification
+electrification <- (56 + 800 + 46.1)/1000 
+
+#Total emissions reductions from energy efficiency 
+efficiency <- offsetsByProject %>%
+  filter(category == "Efficient transportation" | category == "Water filtration") %>%
+  summarise(sum(emissions)) %>% 
+  as.double()
+efficiency <- efficiency + offsets %>%
+  filter(college == "American" & category == "Cookstoves (international)") %>%
+  select(emissions) %>%
+  as.double()
+efficiency <- efficiency - electrification + dataCalculated %>%
+  mutate(s1efficiency = (scope1change + bioReduction)) %>%
+  summarise(sum(s1efficiency)) %>%
+  as.double()/-1000
+efficiency <- efficiency + dataTemp %>%
+  summarise(sum(s3EfficiencyReduction)) %>%
+  as.double()
+efficiency <- efficiency + dataCalculated %>%
+  summarise(sum(scope2changeNoRecs)) %>%
+  as.double()/-1000*0.15
+ 
+#Total emissions reductions from new zero carbon electricity (not including renewable offsets)
+newGeneration <- dataCalculated %>%
+  summarise(sum(recBundled.CN)) %>%
+  as.double()/1000
+newGeneration <- newGeneration + dataCalculated %>%
+  summarise(sum(scope2changeNoRecs)) %>%
+  as.double()/-1000*0.85
+
+#Total emissions reductions from bionergy fuel switch
+bioenergy <- dataCalculated %>%
+  summarise(sum(bioReduction)) %>%
+  as.double()/1000
+bioenergy <- bioenergy + offsetsByProject %>%
+  filter(category == "Biomass fuel switch") %>%
+  summarise(sum(emissions)) %>% 
+  as.double()
+
+#Total emissions reductions from land use change (not including college-owned land sequestration)
+#Offsets from Middlebury are excluded because they are from college-owned land
+luChange <- offsets %>%
+  filter(category %in% c("Forest management (international)", "Urban forestry (US)", "Forest/land management (US)", "Soil conservation (US)"), college!="Middlebury") %>%
+  summarise(sum(emissions)) %>%
+  as.double()
+
+#None of the schools used CO2 removal
+co2Removal <- 0
+
+#Total emissions reductions of non-CO2 GHGs
+nonCo2Reductions <- offsetsByProject %>%
+  filter(category %in% c("Fertilizer nitrous oxide", "Landfill methane", "Dairy methane", "Industrial emissions")) %>%
+  summarise(sum(emissions)) %>%
+  as.double()
+nonCo2Reductions <- nonCo2Reductions + dataTemp %>%
+  summarise(sum(s3NonCo2Reduction)) %>%
+  as.double()
+
+#Calculate percent of total reductions from each source and format data for figure
+mcsComparison <- tibble(
+  strategies = c("Energy\nefficiency", "New zero\ncarbon electricity", "Electrification", "Bioenergy\nfuel switch", "CO2 removal", "Non CO2\nreductions", "Land use\nchange"),
+  mcsValues = c(25, 33, 12, 7, 7, 8, 8), 
+  heiValues = c(efficiency/totalReduction*100, newGeneration/totalReduction*100, electrification/totalReduction*100, bioenergy/totalReduction*100, co2Removal/totalReduction*100, nonCo2Reductions/totalReduction*100, luChange/totalReduction*100)
+)
+mcsComparison$strategies <- factor(mcsComparison$strategies, levels = c("Energy\nefficiency", "New zero\ncarbon electricity", "Electrification", "Bioenergy\nfuel switch", "CO2 removal", "Non CO2\nreductions", "Land use\nchange"))
+
+mcsComparison <- mcsComparison %>%
+  pivot_longer(c(mcsValues, heiValues), names_to = "source", values_to = "percent")
+mcsComparison$source <- factor(mcsComparison$source, levels = c("mcsValues", "heiValues"))
+
+#Intermediate figure that does not include renewable offsets or college-owned land sequestration
+ggplot(mcsComparison) +
+  geom_col(aes(x = strategies, y = percent, fill = source), position = position_dodge(), width = 0.6) +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.title = element_blank()) +
+  labs(x = NULL, y = "Percent of total reductions") +
+  scale_fill_manual(values = c("royalblue3", "orangered3"), labels = c("mcsValues" = "US Mid-Century Strategy", "heiValues" = "Neutral HEIs"))
+
+#Additional new-zero carbon electricity (from offsets); will be displayed in lighter red in figure
+renewableOffsets <- offsetsByProject %>%
+  filter(category == "Renewable energy development") %>%
+  summarise(sum(emissions)) %>% 
+  as.double()
+renewableOffsets <- renewableOffsets + offsets %>%
+  filter(college == "Colgate" & category == "Cookstoves (international)") %>%
+  select(emissions) %>%
+  as.double()
+
+#Additional land use change (from college-owned land sequestration); will be displayed in lighter red in figure
+landSeq <- dataCalculated %>%
+  summarise(sum(unverifiedLandSeq.CN)) %>%
+  as.double()/1000
+landSeq <- landSeq + offsets %>%
+  filter(college=="Middlebury") %>%
+  summarise(sum(emissions)) %>%
+  as.double()
+
+#The following graph is coded to allow for both stacked and dodged column variables. "id" represents the numerical x-axis position, which is set manually and later overlaid with the correct category labels. A placeholder tibble that contains no data is used to create the legend.
+mcs <- subset(mcsComparison, source=="mcsValues") %>%
+  mutate(id = seq(1, 13, by = 2))
+hei <- subset(mcsComparison, source=="heiValues")  %>%
+  mutate(id = seq(1.6, 13.6, by = 2)) %>%
+  add_row(strategies = "New zero\ncarbon electricity", source = "nonAdditional", percent = renewableOffsets/totalReduction*100, id = 3.6) %>%
+  add_row(strategies = "Land use\nchange", source = "nonAdditional", percent = landSeq/totalReduction*100, id = 13.6)
+
+hei$source <- factor(hei$source, levels = c("nonAdditional", "heiValues"))
+
+legendPlaceholder <- tibble(
+  source =c("US mid-century strategy", "Carbon neutral HEIs"), 
+  value = c(0,0)
+)
+legendPlaceholder$source = factor(legendPlaceholder$source, levels = c("US mid-century strategy", "Carbon neutral HEIs"))
+
+ggplot() +
+  geom_col(data = mcs, aes(x = id, y = percent), width = 0.6, fill="royalblue3") +
+  geom_col(data = hei, aes(x = id, y = percent, alpha = source), width = 0.6, fill="orangered3", show.legend = FALSE) +
+  theme_classic() +
+  scale_x_continuous("", breaks = seq(1.3, 13.3, by=2), labels = c("Energy\nefficiency", "New zero\ncarbon electricity", "Electrification", "Bioenergy\nfuel switch", "CO2 removal", "Non CO2\nreductions", "Land use\nchange")) +
+  geom_col(data = legendPlaceholder, aes(x=1, y=value, fill=source)) +
+  scale_fill_manual(values = c("Carbon neutral HEIs" = "orangered3", "US mid-century strategy" = "royalblue3")) +
+  scale_alpha_discrete(range = c(0.5, 1)) +
+  theme(legend.position = "bottom", legend.title = element_blank()) +
+  labs(x = NULL, y = "Percent of total reductions")
+
+ggsave(filename = "fig5.jpeg", path = here("graphs"), height = 4, width = 7, units = "in")
+  
+rm(legendPlaceholder, dataTemp, hei, mcs, mcsComparison)
+
+```
+
+
+```{r paper_stats, include = FALSE}
+#Calculations for paper (see text below)
+AA <- -round(median(dataCalculated$scope1perc))
+
+BB <- dataCalculated %>%
+  filter(scope1change > 0) %>%
+  nrow()
+
+CC <- -round(median(dataCalculated$scope2percNoRecs))
+DD <- -round(median(dataCalculated$scope2percWithRecs))
+
+EE <- -round(median(dataCalculated$scope3perc))
+
+FF <- filter(offsetSummary, source=="offsetsUnbundledRecPerc")$percent %>% median() %>% round()
+GG <- filter(offsetSummary, source=="offsetsUnbundledRecPerc")$percent %>% min() %>% round()
+HH <-  filter(offsetSummary, source=="offsetsUnbundledRecPerc")$percent %>% max() %>% round()
+
+II <- filter(offsetSummary, source=="offsetsUnbundledRecBioPerc")$percent %>% median() %>% round()
+JJ <- filter(offsetSummary, source=="offsetsUnbundledRecBioPerc")$percent %>% min() %>% round()
+KK <- filter(offsetSummary, source=="offsetsUnbundledRecBioPerc")$percent %>% max() %>% round()
+
+PP <- asu %>%
+  filter(yearType=="CN") %>%
+  transmute(coveredPerc = (s1Stationary + s1Mobile + s1Process + s1Fugitive + s1Other + s2Electricity + s2Heat + s2Cool + s2Steam)/(s1Stationary + s1Mobile + s1Process + s1Fugitive + s1Other + s2Electricity + s2Heat + s2Cool + s2Steam +s3Commute + s3Air + s3SolidWaste + s3FuelEnergy + s3GoodsServices + s3TD + s3Agriculture + s3Wastewater + s3Other + s3Other2 + s3Other3 + s3Compost)*100) %>%
+  as.double() %>%
+  round()
+
+QQ <- percentData %>%
+  group_by(college) %>%
+  slice(which.max(percent)) %>%
+  filter(source == "offsetsPerc") %>%
+  nrow()
+
+```
+
+```{r air_travel, include=FALSE}
+#Calculations related to air travel
+
+airTravelData <- data %>% 
+  filter(yearType=="CN") %>% 
+  mutate(gross.CN = dataCalculated$gross.CN, airPerc = s3Air/gross.CN*100) %>%
+  select(college, gross.CN, s3Air, airPerc) %>%
+  filter(college!="Bates") #Bates is omitted because they do not report air travel emissions separately
+
+RR <- airTravelData %>%
+  summarize(min(airPerc)) %>%
+  as.double() %>% 
+  round()
+
+SS <- airTravelData %>%
+  summarize(max(airPerc)) %>%
+  as.double() %>% 
+  round()
+
+remove(airTravelData)
+```
+
+## Stats for paper
+
+The median reduction in fossil-fuel based Scope 1 emissions for these schools was **`r AA `%**, but **`r BB `** schools actually saw their gross Scope 1 emissions increase from baseline year to neutrality year. 
+
+Without accounting for REC purchases, the median reduction in Scope 2 emissions was **`r CC `%**. With all RECs, the median reduction was **`r DD `%**.
+
+The median Scope 3 reduction was **`r EE `%**.
+
+The median use of offsets and unbundled RECs as a share of emissions reductions at the time of neutrality was **`r FF `% (`r GG`-`r HH`%)**. When biomass is included, the use of accounting based measures rose to **`r II `% (`r JJ`-`r KK`%)** .
+
+Offsets are the single largest source of reductions for **`r QQ `** of the 11 schools that have announced carbon neutrality (Figure 3) – well in excess of what is needed to offset air travel (**`r RR`-`r SS`%** of emissions)
+
+Similarly, Arizona State University declared neutrality in 2020, but only for Scope 1 and 2 emissions (**`r PP `%** of the emissions that they report to Second Nature).
+
+```{r include = F}
+#Calculate percent of HEI emissions that could be eliminated with electrification
+
+#Total S1 emissions
+elePot <- dataCalculated %>%
+  summarise(sum(scope1.CN)) %>%
+  as.double()
+
+#Total fugitive emissions
+fugitive <- data %>%
+  filter(yearType == "CN") %>%
+  summarise(sum(s1Fugitive)) %>%
+  as.double
+
+#Total commuting emissions
+commute <- data %>%
+  filter(yearType == "CN") %>%
+  summarise(sum(s3Commute)) %>%
+  as.double
+
+#Total gross emissions in CN year
+gross <- dataCalculated %>%
+  summarise(sum(gross.CN)) %>%
+  as.double
+
+#Percent of emissions that could be eliminated with electrification
+perc <- elePot/gross*100 #Assumes all S1 emissions could be electrified
+percNoFugitive <- (elePot - fugitive)/gross*100 #Assumes S1 emissions minus fugitive emissions could be electrified
+percWithCommute <- (elePot + commute)/gross*100 #Assumes all S1 and S2 commuting emissions could be electrified
+
+```
+
